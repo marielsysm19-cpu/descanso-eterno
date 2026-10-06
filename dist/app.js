@@ -45,10 +45,6 @@ function showToast(message) {
   toastTimer = setTimeout(() => toast.classList.remove('show'), 4200);
 }
 
-document.querySelectorAll('[data-portal]').forEach((button) => {
-  button.addEventListener('click', () => showToast('El portal administrativo se habilitará en la siguiente etapa.'));
-});
-
 document.querySelectorAll('[data-service]').forEach((button) => {
   button.addEventListener('click', () => {
     showToast(`${button.dataset.service}: podemos personalizar este servicio según las necesidades de tu familia.`);

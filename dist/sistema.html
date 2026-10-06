@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#163b2d" />
+    <meta name="description" content="Portal administrativo de Descanso Eterno para gestionar clientes, servicios, reservas, pagos y seguimiento." />
+    <title>Sistema de gestión | Descanso Eterno</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%231b4332'/%3E%3Cpath d='M18 42c15-2 24-12 29-27 3 17-5 31-22 33' fill='none' stroke='%23f8f3e9' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M29 33c-7-1-11-5-12-11 7 0 12 4 12 11Zm7-7c1-7 5-11 11-13 0 7-4 12-11 13Z' fill='%23d9b98c'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="system.css" />
+    <style>[hidden]{display:none!important}</style>
+  </head>
+  <body>
+    <section class="login-screen" id="login-screen" aria-labelledby="login-title">
+      <div class="login-brand">
+        <a href="index.html" aria-label="Volver al sitio de Descanso Eterno">
+          <span class="brand-mark" aria-hidden="true">⌁</span>
+          <span>Descanso Eterno</span>
+        </a>
+        <div class="login-message">
+          <p class="eyebrow">Sistema de gestión funeraria</p>
+          <h1>Organización y cuidado en cada servicio.</h1>
+          <p>Un espacio central para acompañar a las familias, coordinar servicios y mantener informada a toda la operación.</p>
+        </div>
+        <p class="login-footnote">Prototipo académico · Agile Development 2026</p>
+      </div>
+
+      <div class="login-panel">
+        <form class="login-card" id="login-form">
+          <a class="back-link" href="index.html">← Volver al sitio público</a>
+          <p class="eyebrow">Acceso del personal</p>
+          <h2 id="login-title">Bienvenido al sistema</h2>
+          <p>Ingresa con tus credenciales para continuar.</p>
+          <label>Correo electrónico<input id="login-email" type="email" autocomplete="username" value="admin@descansoeterno.pe" required /></label>
+          <label>Contraseña<input id="login-password" type="password" autocomplete="current-password" value="Demo2026!" required /></label>
+          <button class="primary-button" type="submit">Ingresar</button>
+          <p class="login-error" id="login-error" role="alert"></p>
+          <div class="demo-note"><strong>Acceso de demostración</strong><span>admin@descansoeterno.pe</span><span>Demo2026!</span></div>
+        </form>
+      </div>
+    </section>
+
+    <div class="app-shell" id="app-shell" hidden>
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand"><span class="brand-mark" aria-hidden="true">⌁</span><span>Descanso Eterno<small>Gestión funeraria</small></span></div>
+        <nav class="side-nav" aria-label="Módulos del sistema">
+          <button class="active" data-view="dashboard"><span>⌂</span>Panel general</button>
+          <p>Atención</p>
+          <button data-view="clients"><span>♙</span>Clientes</button>
+          <button data-view="deceased"><span>◇</span>Personas fallecidas</button>
+          <p>Operación</p>
+          <button data-view="services"><span>▤</span>Servicios</button>
+          <button data-view="reservations"><span>▣</span>Reservas</button>
+          <button data-view="tracking"><span>◉</span>Seguimiento</button>
+          <button data-view="payments"><span>▱</span>Pagos</button>
+          <p>Administración</p>
+          <button data-view="users"><span>⚙</span>Usuarios y permisos</button>
+        </nav>
+        <div class="sidebar-footer"><span class="avatar">ML</span><span><strong>Marielsys López</strong><small>Administradora</small></span><button id="logout" aria-label="Cerrar sesión">↪</button></div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <button class="mobile-menu" id="mobile-menu" aria-label="Abrir menú" aria-expanded="false">☰</button>
+          <div class="search-box"><span>⌕</span><input id="global-search" type="search" placeholder="Buscar clientes, reservas o servicios..." aria-label="Buscar en el sistema" /></div>
+          <div class="topbar-actions"><span class="prototype-pill">Datos locales</span><button class="notification" aria-label="Notificaciones">●</button><span class="top-avatar">ML</span></div>
+        </header>
+
+        <div class="content">
+          <section class="view active" id="view-dashboard" data-title="Panel general">
+            <div class="page-heading"><div><p class="eyebrow">Resumen operativo</p><h1>Buenos días, Marielsys</h1><p>Revisa la actividad de hoy y continúa con las tareas prioritarias.</p></div><button class="primary-button" data-quick="reservation">+ Nueva reserva</button></div>
+            <div class="metric-grid" id="metrics"></div>
+            <div class="dashboard-grid">
+              <article class="panel schedule-panel"><div class="panel-head"><div><h2>Servicios programados</h2><p>Próximas atenciones registradas</p></div><button class="text-button" data-jump="reservations">Ver todos</button></div><div id="upcoming-list" class="upcoming-list"></div></article>
+              <article class="panel progress-panel"><div class="panel-head"><div><h2>Estado de servicios</h2><p>Distribución actual</p></div></div><div id="status-summary" class="status-summary"></div></article>
+              <article class="panel quick-panel"><div class="panel-head"><div><h2>Accesos rápidos</h2><p>Registra información esencial</p></div></div><div class="quick-grid"><button data-quick="client"><span>♙</span>Registrar cliente</button><button data-quick="deceased"><span>◇</span>Registrar fallecido</button><button data-quick="service"><span>▤</span>Registrar servicio</button><button data-quick="payment"><span>▱</span>Registrar pago</button></div></article>
+            </div>
+          </section>
+
+          <section class="view" id="view-clients" data-title="Clientes responsables">
+            <div class="page-heading"><div><p class="eyebrow">HU01 · HU03</p><h1>Clientes responsables</h1><p>Personas encargadas de solicitar y coordinar la atención.</p></div><button class="primary-button" data-quick="client">+ Registrar cliente</button></div>
+            <div class="panel table-panel"><div class="table-tools"><input class="table-search" data-table-filter="clients-table" placeholder="Buscar por nombre o documento" /><span id="clients-count"></span></div><div class="table-wrap"><table id="clients-table"><thead><tr><th>Cliente</th><th>Documento</th><th>Teléfono</th><th>Registro</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
+          </section>
+
+          <section class="view" id="view-deceased" data-title="Personas fallecidas">
+            <div class="page-heading"><div><p class="eyebrow">HU02 · HU03</p><h1>Personas fallecidas</h1><p>Información asociada a cada cliente responsable.</p></div><button class="primary-button" data-quick="deceased">+ Registrar persona</button></div>
+            <div class="panel table-panel"><div class="table-tools"><input class="table-search" data-table-filter="deceased-table" placeholder="Buscar por nombre o documento" /><span id="deceased-count"></span></div><div class="table-wrap"><table id="deceased-table"><thead><tr><th>Nombre</th><th>Documento</th><th>Fecha de fallecimiento</th><th>Cliente responsable</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
+          </section>
+
+          <section class="view" id="view-services" data-title="Servicios funerarios">
+            <div class="page-heading"><div><p class="eyebrow">HU04 · HU05 · HU06</p><h1>Servicios funerarios</h1><p>Catálogo disponible para las contrataciones.</p></div><button class="primary-button" data-quick="service">+ Registrar servicio</button></div>
+            <div class="service-admin-grid" id="services-grid"></div>
+          </section>
+
+          <section class="view" id="view-reservations" data-title="Reservas y contrataciones">
+            <div class="page-heading"><div><p class="eyebrow">HU07 · HU08 · HU09 · HU11</p><h1>Reservas</h1><p>Programa, consulta y actualiza los servicios contratados.</p></div><button class="primary-button" data-quick="reservation">+ Nueva reserva</button></div>
+            <div class="panel table-panel"><div class="table-tools"><input class="table-search" data-table-filter="reservations-table" placeholder="Buscar reserva, cliente o servicio" /><span id="reservations-count"></span></div><div class="table-wrap"><table id="reservations-table"><thead><tr><th>Reserva</th><th>Familia</th><th>Servicio</th><th>Fecha y hora</th><th>Estado</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
+          </section>
+
+          <section class="view" id="view-tracking" data-title="Seguimiento de servicios">
+            <div class="page-heading"><div><p class="eyebrow">HU12 · HU13 · HU14</p><h1>Seguimiento</h1><p>Actualiza el estado y consulta el historial de cada servicio.</p></div></div>
+            <div class="tracking-grid" id="tracking-grid"></div>
+          </section>
+
+          <section class="view" id="view-payments" data-title="Pagos">
+            <div class="page-heading"><div><p class="eyebrow">HU10</p><h1>Pagos asociados</h1><p>Control económico de los servicios contratados.</p></div><button class="primary-button" data-quick="payment">+ Registrar pago</button></div>
+            <div class="panel table-panel"><div class="table-tools"><input class="table-search" data-table-filter="payments-table" placeholder="Buscar reserva o método" /><span id="payments-count"></span></div><div class="table-wrap"><table id="payments-table"><thead><tr><th>Comprobante</th><th>Reserva</th><th>Fecha</th><th>Método</th><th>Monto</th><th>Estado</th></tr></thead><tbody></tbody></table></div></div>
+          </section>
+
+          <section class="view" id="view-users" data-title="Usuarios y permisos">
+            <div class="page-heading"><div><p class="eyebrow">HU15 · HU16 · HU17</p><h1>Usuarios y permisos</h1><p>Controla el acceso según las funciones del personal.</p></div><button class="primary-button" data-quick="user">+ Registrar usuario</button></div>
+            <div class="users-layout"><div class="panel table-panel"><div class="table-wrap"><table id="users-table"><thead><tr><th>Usuario</th><th>Correo</th><th>Rol</th><th>Estado</th></tr></thead><tbody></tbody></table></div></div><aside class="panel role-panel"><h2>Permisos por rol</h2><div class="role-item"><strong>Administrador</strong><p>Acceso completo, usuarios y configuración.</p></div><div class="role-item"><strong>Atención</strong><p>Clientes, fallecidos, reservas y pagos.</p></div><div class="role-item"><strong>Operaciones</strong><p>Servicios programados y seguimiento.</p></div></aside></div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <dialog class="record-dialog" id="record-dialog">
+      <div class="dialog-head"><div><p class="eyebrow" id="dialog-eyebrow">Nuevo registro</p><h2 id="dialog-title">Registrar</h2></div><button class="close-dialog" type="button" aria-label="Cerrar">×</button></div>
+      <form id="record-form"><div id="form-fields" class="form-grid"></div><div class="dialog-actions"><button class="secondary-button close-action" type="button">Cancelar</button><button class="primary-button" type="submit">Guardar registro</button></div><p id="form-message" class="form-message" role="status"></p></form>
+    </dialog>
+
+    <div class="toast" id="system-toast" role="status" aria-live="polite"></div>
+    <script src="system.js"></script>
+  </body>
+</html>

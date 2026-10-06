@@ -1,0 +1,274 @@
+const STORAGE_KEY = 'descanso-eterno-demo-v1';
+const SESSION_KEY = 'descanso-eterno-session';
+
+const seed = {
+  clients: [
+    { id: 'CL-001', name: 'María Fernanda Rojas', document: '45781236', phone: '987 654 210', created: '2026-10-03' },
+    { id: 'CL-002', name: 'Antonio Salazar', document: '42156987', phone: '965 114 820', created: '2026-10-04' }
+  ],
+  deceased: [
+    { id: 'FA-001', name: 'Carlos Alberto Rojas', document: '18112456', deathDate: '2026-10-03', clientId: 'CL-001' },
+    { id: 'FA-002', name: 'Elena Salazar Ruiz', document: '', deathDate: '2026-10-04', clientId: 'CL-002' }
+  ],
+  services: [
+    { id: 'SV-001', name: 'Velación Serenidad', description: 'Sala privada, coordinación de ceremonia y acompañamiento familiar.', price: 2800, active: true },
+    { id: 'SV-002', name: 'Cremación Integral', description: 'Cremación, urna conmemorativa y ceremonia de despedida.', price: 3600, active: true },
+    { id: 'SV-003', name: 'Traslado Nacional', description: 'Coordinación y traslado terrestre dentro del país.', price: 1900, active: true }
+  ],
+  reservations: [
+    { id: 'RS-2026-001', clientId: 'CL-001', deceasedId: 'FA-001', serviceId: 'SV-001', date: '2026-10-06', time: '10:00', status: 'En preparación', history: [{ status: 'Por confirmar', at: '2026-10-03 09:10' }, { status: 'En preparación', at: '2026-10-04 15:30' }] },
+    { id: 'RS-2026-002', clientId: 'CL-002', deceasedId: 'FA-002', serviceId: 'SV-002', date: '2026-10-06', time: '16:00', status: 'Por confirmar', history: [{ status: 'Por confirmar', at: '2026-10-04 17:45' }] }
+  ],
+  payments: [
+    { id: 'PG-001', reservationId: 'RS-2026-001', date: '2026-10-04', method: 'Transferencia', amount: 1400, status: 'Parcial' }
+  ],
+  users: [
+    { id: 'US-001', name: 'Marielsys López', email: 'admin@descansoeterno.pe', role: 'Administrador', active: true },
+    { id: 'US-002', name: 'Laura Méndez', email: 'atencion@descansoeterno.pe', role: 'Atención', active: true },
+    { id: 'US-003', name: 'Miguel Castillo', email: 'operaciones@descansoeterno.pe', role: 'Operaciones', active: true }
+  ]
+};
+
+let data = loadData();
+let currentType = '';
+let editingId = null;
+const loginScreen = document.querySelector('#login-screen');
+const appShell = document.querySelector('#app-shell');
+const dialog = document.querySelector('#record-dialog');
+const form = document.querySelector('#record-form');
+const fields = document.querySelector('#form-fields');
+const toast = document.querySelector('#system-toast');
+
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || structuredClone(seed); }
+  catch { return structuredClone(seed); }
+}
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  renderAll();
+}
+
+function byId(collection, id) { return data[collection].find(item => item.id === id); }
+function today() { return new Date().toISOString().slice(0, 10); }
+function money(value) { return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN', maximumFractionDigits: 0 }).format(value || 0); }
+function displayDate(value) { if (!value) return '—'; return new Intl.DateTimeFormat('es-PE', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(`${value}T12:00:00`)); }
+function slug(value) { return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-'); }
+function nextId(prefix, list) { return `${prefix}-${String(list.length + 1).padStart(3, '0')}`; }
+function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]); }
+
+document.querySelector('#login-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const email = document.querySelector('#login-email').value.trim();
+  const password = document.querySelector('#login-password').value;
+  if (email === 'admin@descansoeterno.pe' && password === 'Demo2026!') {
+    sessionStorage.setItem(SESSION_KEY, 'active');
+    enterApp();
+  } else {
+    document.querySelector('#login-error').textContent = 'Las credenciales no son válidas. Usa el acceso de demostración.';
+  }
+});
+
+function enterApp() {
+  loginScreen.hidden = true;
+  appShell.hidden = false;
+  renderAll();
+}
+
+document.querySelector('#logout').addEventListener('click', () => {
+  sessionStorage.removeItem(SESSION_KEY);
+  appShell.hidden = true;
+  loginScreen.hidden = false;
+});
+
+if (sessionStorage.getItem(SESSION_KEY) === 'active') enterApp();
+
+document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
+document.querySelectorAll('[data-jump]').forEach(button => button.addEventListener('click', () => showView(button.dataset.jump)));
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === `view-${name}`));
+  document.querySelectorAll('[data-view]').forEach(button => button.classList.toggle('active', button.dataset.view === name));
+  document.querySelector('#sidebar').classList.remove('open');
+  document.querySelector('#mobile-menu').setAttribute('aria-expanded', 'false');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.querySelector('#mobile-menu').addEventListener('click', event => {
+  const open = document.querySelector('#sidebar').classList.toggle('open');
+  event.currentTarget.setAttribute('aria-expanded', String(open));
+});
+
+document.querySelectorAll('[data-quick]').forEach(button => button.addEventListener('click', () => openForm(button.dataset.quick)));
+document.querySelector('.close-dialog').addEventListener('click', () => dialog.close());
+document.querySelector('.close-action').addEventListener('click', () => dialog.close());
+dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+
+const formConfig = {
+  client: { title: 'Registrar cliente responsable', eyebrow: 'HU01 · Datos obligatorios', collection: 'clients', prefix: 'CL', fields: [
+    ['name', 'Nombres y apellidos', 'text', true, 'full'], ['document', 'Documento de identidad', 'text', true], ['phone', 'Teléfono de contacto', 'tel', true]
+  ]},
+  deceased: { title: 'Registrar persona fallecida', eyebrow: 'HU02 · Asociación familiar', collection: 'deceased', prefix: 'FA', fields: [
+    ['name', 'Nombres y apellidos', 'text', true, 'full'], ['document', 'Documento (opcional)', 'text', false], ['deathDate', 'Fecha de fallecimiento', 'date', true], ['clientId', 'Cliente responsable', 'clients', true, 'full']
+  ]},
+  service: { title: 'Registrar servicio funerario', eyebrow: 'HU04 · Catálogo de servicios', collection: 'services', prefix: 'SV', fields: [
+    ['name', 'Nombre del servicio', 'text', true, 'full'], ['description', 'Descripción', 'textarea', true, 'full'], ['price', 'Precio', 'number', true], ['active', 'Servicio disponible', 'checkbox', false]
+  ]},
+  reservation: { title: 'Registrar reserva', eyebrow: 'HU07 · Contratación', collection: 'reservations', prefix: 'RS', fields: [
+    ['clientId', 'Cliente responsable', 'clients', true], ['deceasedId', 'Persona fallecida', 'deceased', true], ['serviceId', 'Servicio', 'services', true, 'full'], ['date', 'Fecha', 'date', true], ['time', 'Hora', 'time', true]
+  ]},
+  payment: { title: 'Registrar pago', eyebrow: 'HU10 · Control económico', collection: 'payments', prefix: 'PG', fields: [
+    ['reservationId', 'Reserva asociada', 'reservations', true, 'full'], ['amount', 'Monto', 'number', true], ['method', 'Método de pago', ['Efectivo', 'Transferencia', 'Tarjeta'], true], ['status', 'Estado del pago', ['Parcial', 'Pagado'], true]
+  ]},
+  user: { title: 'Registrar usuario', eyebrow: 'HU16 · Acceso autorizado', collection: 'users', prefix: 'US', fields: [
+    ['name', 'Nombre completo', 'text', true, 'full'], ['email', 'Correo', 'email', true, 'full'], ['role', 'Rol', ['Administrador', 'Atención', 'Operaciones'], true], ['active', 'Usuario activo', 'checkbox', false]
+  ]}
+};
+
+function openForm(type, id = null) {
+  currentType = type;
+  editingId = id;
+  const config = formConfig[type];
+  const current = id ? byId(config.collection, id) : {};
+  document.querySelector('#dialog-title').textContent = id ? `Actualizar ${config.title.replace('Registrar ', '').toLowerCase()}` : config.title;
+  document.querySelector('#dialog-eyebrow').textContent = id ? 'Actualizar información registrada' : config.eyebrow;
+  document.querySelector('#form-message').textContent = '';
+  fields.innerHTML = config.fields.map(([name, label, typeDef, required, className = '']) => fieldHtml(name, label, typeDef, required, className, current[name])).join('');
+  dialog.showModal();
+}
+
+function fieldHtml(name, label, typeDef, required, className, value) {
+  const req = required ? 'required' : '';
+  if (typeDef === 'textarea') return `<label class="${className}">${label}<textarea name="${name}" rows="3" ${req}>${escapeHtml(value || '')}</textarea></label>`;
+  if (typeDef === 'checkbox') return `<label class="check ${className}"><input name="${name}" type="checkbox" ${value !== false ? 'checked' : ''}/> ${label}</label>`;
+  if (Array.isArray(typeDef)) return `<label class="${className}">${label}<select name="${name}" ${req}><option value="">Selecciona</option>${typeDef.map(item => `<option ${item === value ? 'selected' : ''}>${item}</option>`).join('')}</select></label>`;
+  if (data[typeDef]) {
+    const options = data[typeDef].filter(item => item.active !== false && item.status !== 'Cancelada').map(item => `<option value="${item.id}" ${item.id === value ? 'selected' : ''}>${escapeHtml(item.name || item.id)}</option>`).join('');
+    return `<label class="${className}">${label}<select name="${name}" ${req}><option value="">Selecciona</option>${options}</select></label>`;
+  }
+  return `<label class="${className}">${label}<input name="${name}" type="${typeDef}" value="${escapeHtml(value ?? '')}" ${req} ${typeDef === 'number' ? 'min="0" step="0.01"' : ''}/></label>`;
+}
+
+form.addEventListener('submit', event => {
+  event.preventDefault();
+  const config = formConfig[currentType];
+  const formData = new FormData(form);
+  const record = editingId ? { ...byId(config.collection, editingId) } : { id: createId(currentType, config), created: today() };
+  config.fields.forEach(([name, , typeDef]) => {
+    record[name] = typeDef === 'checkbox' ? form.querySelector(`[name="${name}"]`).checked : formData.get(name);
+    if (typeDef === 'number') record[name] = Number(record[name]);
+  });
+  if (currentType === 'reservation' && !editingId) { record.status = 'Por confirmar'; record.history = [{ status: record.status, at: new Date().toLocaleString('es-PE') }]; }
+  if (currentType === 'payment' && !editingId) record.date = today();
+  if (currentType === 'user' && !editingId) record.active = true;
+  if (editingId) data[config.collection] = data[config.collection].map(item => item.id === editingId ? record : item);
+  else data[config.collection].push(record);
+  saveData();
+  document.querySelector('#form-message').textContent = editingId ? 'Información actualizada correctamente.' : 'Registro guardado correctamente.';
+  showToast(editingId ? 'Cambios guardados.' : 'Registro creado con éxito.');
+  setTimeout(() => dialog.close(), 650);
+});
+
+function createId(type, config) {
+  if (type === 'reservation') return `RS-${new Date().getFullYear()}-${String(data.reservations.length + 1).padStart(3, '0')}`;
+  return nextId(config.prefix, data[config.collection]);
+}
+
+function renderAll() {
+  renderMetrics(); renderClients(); renderDeceased(); renderServices(); renderReservations(); renderTracking(); renderPayments(); renderUsers();
+}
+
+function renderMetrics() {
+  const activeReservations = data.reservations.filter(item => !['Finalizado', 'Cancelada'].includes(item.status));
+  const pendingTotal = data.reservations.reduce((sum, reservation) => {
+    const price = byId('services', reservation.serviceId)?.price || 0;
+    const paid = data.payments.filter(payment => payment.reservationId === reservation.id).reduce((value, payment) => value + Number(payment.amount), 0);
+    return sum + Math.max(0, price - paid);
+  }, 0);
+  document.querySelector('#metrics').innerHTML = [
+    ['Servicios activos', activeReservations.length, 'reservas en proceso'], ['Clientes', data.clients.length, 'responsables registrados'], ['Catálogo disponible', data.services.filter(item => item.active).length, 'servicios activos'], ['Saldo pendiente', money(pendingTotal), 'por recaudar']
+  ].map(([label, value, detail]) => `<article class="metric-card"><span>${label}</span><strong>${value}</strong><small>${detail}</small></article>`).join('');
+  document.querySelector('#upcoming-list').innerHTML = data.reservations.filter(item => item.status !== 'Cancelada').sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)).slice(0, 5).map(reservation => {
+    const client = byId('clients', reservation.clientId); const service = byId('services', reservation.serviceId); const date = new Date(`${reservation.date}T12:00:00`);
+    return `<div class="upcoming-item"><div class="date-box"><strong>${String(date.getDate()).padStart(2, '0')}</strong>${date.toLocaleDateString('es-PE', { month: 'short' })}</div><div><h3>${escapeHtml(client?.name || 'Sin cliente')}</h3><p>${escapeHtml(service?.name || 'Sin servicio')} · ${reservation.time}</p></div><span class="status-pill ${slug(reservation.status)}">${reservation.status}</span></div>`;
+  }).join('') || '<p class="empty-row">No hay servicios programados.</p>';
+  const statuses = ['Por confirmar', 'En preparación', 'En ceremonia', 'Finalizado'];
+  document.querySelector('#status-summary').innerHTML = statuses.map(status => {
+    const count = data.reservations.filter(item => item.status === status).length; const percent = data.reservations.length ? Math.round(count / data.reservations.length * 100) : 0;
+    return `<div class="status-row"><div><span>${status}</span><strong>${count}</strong></div><div class="bar"><span style="width:${percent}%"></span></div></div>`;
+  }).join('');
+}
+
+function renderClients() {
+  const tbody = document.querySelector('#clients-table tbody');
+  tbody.innerHTML = data.clients.map(item => `<tr><td><strong>${escapeHtml(item.name)}</strong><small>${item.id}</small></td><td>${escapeHtml(item.document)}</td><td>${escapeHtml(item.phone)}</td><td>${displayDate(item.created)}</td><td><button class="action-button" data-edit="client" data-id="${item.id}">Editar</button></td></tr>`).join('') || emptyRow(5, 'No hay clientes registrados.');
+  document.querySelector('#clients-count').textContent = `${data.clients.length} registros`;
+}
+
+function renderDeceased() {
+  document.querySelector('#deceased-table tbody').innerHTML = data.deceased.map(item => `<tr><td><strong>${escapeHtml(item.name)}</strong><small>${item.id}</small></td><td>${escapeHtml(item.document || 'No registrado')}</td><td>${displayDate(item.deathDate)}</td><td>${escapeHtml(byId('clients', item.clientId)?.name || 'Sin asociación')}</td><td><button class="action-button" data-edit="deceased" data-id="${item.id}">Editar</button></td></tr>`).join('') || emptyRow(5, 'No hay personas registradas.');
+  document.querySelector('#deceased-count').textContent = `${data.deceased.length} registros`;
+}
+
+function renderServices() {
+  document.querySelector('#services-grid').innerHTML = data.services.map(item => `<article class="service-admin-card"><header><div><p class="eyebrow">${item.id}</p><h2>${escapeHtml(item.name)}</h2></div><span class="availability ${item.active ? 'active' : 'inactive'}">${item.active ? 'Disponible' : 'Inactivo'}</span></header><p>${escapeHtml(item.description)}</p><footer><strong>${money(item.price)}</strong><button class="action-button" data-edit="service" data-id="${item.id}">Editar</button></footer></article>`).join('');
+}
+
+function renderReservations() {
+  document.querySelector('#reservations-table tbody').innerHTML = data.reservations.map(item => `<tr><td><strong>${item.id}</strong><small>${escapeHtml(byId('deceased', item.deceasedId)?.name || '')}</small></td><td>${escapeHtml(byId('clients', item.clientId)?.name || '—')}</td><td>${escapeHtml(byId('services', item.serviceId)?.name || '—')}</td><td>${displayDate(item.date)} · ${item.time}</td><td><span class="status-pill ${slug(item.status)}">${item.status}</span></td><td><button class="action-button" data-edit="reservation" data-id="${item.id}">Editar</button> ${item.status !== 'Cancelada' ? `<button class="action-button" data-cancel="${item.id}">Cancelar</button>` : ''}</td></tr>`).join('') || emptyRow(6, 'No hay reservas registradas.');
+  document.querySelector('#reservations-count').textContent = `${data.reservations.length} reservas`;
+}
+
+function renderTracking() {
+  document.querySelector('#tracking-grid').innerHTML = data.reservations.filter(item => item.status !== 'Cancelada').map(item => `<article class="tracking-card"><header><div><p class="eyebrow">${item.id}</p><h2>${escapeHtml(byId('clients', item.clientId)?.name || '')}</h2><p>${escapeHtml(byId('services', item.serviceId)?.name || '')} · ${displayDate(item.date)}</p></div><span class="status-pill ${slug(item.status)}">${item.status}</span></header><select data-status-for="${item.id}" aria-label="Actualizar estado de ${item.id}">${['Por confirmar','En preparación','En ceremonia','Finalizado'].map(status => `<option ${status === item.status ? 'selected' : ''}>${status}</option>`).join('')}</select><ul class="history">${[...(item.history || [])].reverse().slice(0, 4).map(entry => `<li><strong>${entry.status}</strong><br>${escapeHtml(entry.at)}</li>`).join('')}</ul></article>`).join('') || '<div class="panel empty-row">No hay servicios para seguimiento.</div>';
+}
+
+function renderPayments() {
+  document.querySelector('#payments-table tbody').innerHTML = data.payments.map(item => `<tr><td><strong>${item.id}</strong></td><td>${item.reservationId}</td><td>${displayDate(item.date)}</td><td>${escapeHtml(item.method)}</td><td><strong>${money(item.amount)}</strong></td><td><span class="status-pill">${item.status}</span></td></tr>`).join('') || emptyRow(6, 'No hay pagos registrados.');
+  document.querySelector('#payments-count').textContent = `${data.payments.length} pagos`;
+}
+
+function renderUsers() {
+  document.querySelector('#users-table tbody').innerHTML = data.users.map(item => `<tr><td><strong>${escapeHtml(item.name)}</strong><small>${item.id}</small></td><td>${escapeHtml(item.email)}</td><td>${item.role}</td><td><span class="status-pill">${item.active ? 'Activo' : 'Inactivo'}</span></td></tr>`).join('');
+}
+
+function emptyRow(cols, message) { return `<tr class="empty-row"><td colspan="${cols}">${message}</td></tr>`; }
+
+document.addEventListener('click', event => {
+  const edit = event.target.closest('[data-edit]');
+  if (edit) openForm(edit.dataset.edit, edit.dataset.id);
+  const cancel = event.target.closest('[data-cancel]');
+  if (cancel && confirm('¿Deseas cancelar esta reserva?')) {
+    const reservation = byId('reservations', cancel.dataset.cancel); reservation.status = 'Cancelada'; reservation.history.push({ status: 'Cancelada', at: new Date().toLocaleString('es-PE') }); saveData(); showToast('Reserva cancelada y disponibilidad actualizada.');
+  }
+});
+
+document.addEventListener('change', event => {
+  if (!event.target.matches('[data-status-for]')) return;
+  const reservation = byId('reservations', event.target.dataset.statusFor);
+  reservation.status = event.target.value;
+  reservation.history = reservation.history || [];
+  reservation.history.push({ status: reservation.status, at: new Date().toLocaleString('es-PE') });
+  saveData(); showToast('Estado del servicio actualizado.');
+});
+
+document.querySelectorAll('[data-table-filter]').forEach(input => input.addEventListener('input', () => {
+  const value = input.value.toLowerCase();
+  document.querySelectorAll(`#${input.dataset.tableFilter} tbody tr`).forEach(row => row.hidden = !row.textContent.toLowerCase().includes(value));
+}));
+
+document.querySelector('#global-search').addEventListener('input', event => {
+  const query = event.target.value.trim().toLowerCase();
+  if (query.length < 2) return;
+  const match = [
+    ...data.clients.map(item => ({ view: 'clients', text: `${item.name} ${item.document}` })),
+    ...data.reservations.map(item => ({ view: 'reservations', text: `${item.id} ${byId('clients', item.clientId)?.name}` })),
+    ...data.services.map(item => ({ view: 'services', text: item.name }))
+  ].find(item => item.text.toLowerCase().includes(query));
+  if (match) showView(match.view);
+});
+
+let toastTimer;
+function showToast(message) { toast.textContent = message; toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 3000); }
+
+renderAll();
