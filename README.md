@@ -4,7 +4,7 @@ Sistema web para la gestión de servicios funerarios. El proyecto contempla la a
 
 ## Estado actual
 
-La interfaz funcional está disponible en `dist/` e incluye:
+La interfaz funcional está disponible en `frontend/` e incluye:
 
 - Sitio público de presentación y servicios.
 - Formulario de solicitud de asistencia.
@@ -24,17 +24,18 @@ Los datos se almacenan localmente en el navegador para fines de demostración. L
 
 ```text
 descanso-eterno/
-├── dist/          # Interfaz web actual
-├── backend/       # API y lógica del servidor
-├── database/      # Scripts y migraciones de la base de datos
+├── frontend/      # Interfaz web — Marielsys y Michelle
+├── backend/       # API y lógica del servidor — Diego y César
+├── database/      # Scripts y migraciones — Rodrigo
+├── tests/         # Pruebas funcionales e integración — Josema
 ├── docs/          # Documentación técnica y funcional
 └── README.md
 ```
 
 ## Ejecutar la interfaz
 
-1. Abre `dist/index.html` para visualizar el sitio público.
-2. Selecciona **Acceso al sistema** o abre `dist/sistema.html`.
+1. Abre `frontend/index.html` para visualizar el sitio público.
+2. Selecciona **Acceso al sistema** o abre `frontend/sistema.html`.
 3. Para la demostración usa:
 
 ```text
