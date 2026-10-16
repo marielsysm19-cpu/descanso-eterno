@@ -81,37 +81,37 @@
           </section>
 
           <section class="view" id="view-clients" data-title="Clientes responsables">
-            <div class="page-heading"><div><p class="eyebrow">CV-9 · Cliente responsable</p><h1>Clientes responsables</h1><p>Personas encargadas de solicitar y coordinar la atención.</p></div><button class="primary-button" data-quick="client">+ Registrar cliente</button></div>
-            <div class="panel table-panel"><div class="table-tools"><input class="table-search" data-table-filter="clients-table" placeholder="Buscar por nombre o documento" /><span id="clients-count"></span></div><div class="table-wrap"><table id="clients-table"><thead><tr><th>Cliente</th><th>Documento</th><th>Teléfono</th><th>Registro</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
+            <div class="page-heading"><div><p class="eyebrow">HU01 · HU03</p><h1>Clientes responsables</h1><p>Personas encargadas de solicitar y coordinar la atención.</p></div><button class="primary-button" data-quick="client">+ Registrar cliente</button></div>
+            <div class="panel table-panel"><div class="table-tools"><input class="table-search" data-table-filter="clients-table" placeholder="Buscar por nombre, correo o teléfono" /><span id="clients-count"></span></div><div class="table-wrap"><table id="clients-table"><thead><tr><th>Cliente</th><th>Etapa</th><th>Contacto</th><th>Servicio</th><th>Registro</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
           </section>
 
           <section class="view" id="view-deceased" data-title="Personas fallecidas">
-            <div class="page-heading"><div><p class="eyebrow">CV-10 · Persona fallecida</p><h1>Personas fallecidas</h1><p>Información asociada a cada cliente responsable.</p></div><button class="primary-button" data-quick="deceased">+ Registrar persona</button></div>
+            <div class="page-heading"><div><p class="eyebrow">HU02 · HU03</p><h1>Personas fallecidas</h1><p>Información asociada a cada cliente responsable.</p></div><button class="primary-button" data-quick="deceased">+ Registrar persona</button></div>
             <div class="panel table-panel"><div class="table-tools"><input class="table-search" data-table-filter="deceased-table" placeholder="Buscar por nombre o documento" /><span id="deceased-count"></span></div><div class="table-wrap"><table id="deceased-table"><thead><tr><th>Nombre</th><th>Documento</th><th>Fecha de fallecimiento</th><th>Cliente responsable</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
           </section>
 
           <section class="view" id="view-services" data-title="Servicios funerarios">
-            <div class="page-heading"><div><p class="eyebrow">CV-13 · Servicio funerario</p><h1>Servicios funerarios</h1><p>Catálogo disponible para las contrataciones.</p></div><button class="primary-button" data-quick="service">+ Registrar servicio</button></div>
+            <div class="page-heading"><div><p class="eyebrow">HU04 · HU05 · HU06</p><h1>Servicios funerarios</h1><p>Catálogo disponible para las contrataciones.</p></div><button class="primary-button" data-quick="service">+ Registrar servicio</button></div>
             <div class="service-admin-grid" id="services-grid"></div>
           </section>
 
           <section class="view" id="view-reservations" data-title="Reservas y contrataciones">
-            <div class="page-heading"><div><p class="eyebrow">CV-16 · CV-17 · Reservas</p><h1>Reservas</h1><p>Programa, consulta y actualiza los servicios contratados.</p></div><button class="primary-button" data-quick="reservation">+ Nueva reserva</button></div>
+            <div class="page-heading"><div><p class="eyebrow">HU07 · HU08 · HU09 · HU11</p><h1>Reservas</h1><p>Programa, consulta y actualiza los servicios contratados.</p></div><button class="primary-button" data-quick="reservation">+ Nueva reserva</button></div>
             <div class="panel table-panel"><div class="table-tools"><input class="table-search" data-table-filter="reservations-table" placeholder="Buscar reserva, cliente o servicio" /><span id="reservations-count"></span></div><div class="table-wrap"><table id="reservations-table"><thead><tr><th>Reserva</th><th>Familia</th><th>Servicio</th><th>Fecha y hora</th><th>Estado</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
           </section>
 
           <section class="view" id="view-tracking" data-title="Seguimiento de servicios">
-            <div class="page-heading"><div><p class="eyebrow">CV-21 · CV-22 · CV-27</p><h1>Seguimiento</h1><p>Actualiza el estado y consulta el historial de cada servicio.</p></div></div>
+            <div class="page-heading"><div><p class="eyebrow">HU12 · HU13 · HU14</p><h1>Seguimiento</h1><p>Actualiza el estado y consulta el historial de cada servicio.</p></div></div>
             <div class="tracking-grid" id="tracking-grid"></div>
           </section>
 
           <section class="view" id="view-payments" data-title="Pagos">
-            <div class="page-heading"><div><p class="eyebrow">CV-20 · Registro de pago</p><h1>Pagos asociados</h1><p>Control económico de los servicios contratados.</p></div><button class="primary-button" data-quick="payment">+ Registrar pago</button></div>
+            <div class="page-heading"><div><p class="eyebrow">HU10</p><h1>Pagos asociados</h1><p>Control económico de los servicios contratados.</p></div><button class="primary-button" data-quick="payment">+ Registrar pago</button></div>
             <div class="panel table-panel"><div class="table-tools"><input class="table-search" data-table-filter="payments-table" placeholder="Buscar reserva o método" /><span id="payments-count"></span></div><div class="table-wrap"><table id="payments-table"><thead><tr><th>Comprobante</th><th>Reserva</th><th>Fecha</th><th>Método</th><th>Monto</th><th>Estado</th></tr></thead><tbody></tbody></table></div></div>
           </section>
 
           <section class="view" id="view-users" data-title="Usuarios y permisos">
-            <div class="page-heading"><div><p class="eyebrow">CV-29 · CV-30 · Usuarios y permisos</p><h1>Usuarios y permisos</h1><p>Controla el acceso según las funciones del personal.</p></div><button class="primary-button" data-quick="user">+ Registrar usuario</button></div>
+            <div class="page-heading"><div><p class="eyebrow">HU15 · HU16 · HU17</p><h1>Usuarios y permisos</h1><p>Controla el acceso según las funciones del personal.</p></div><button class="primary-button" data-quick="user">+ Registrar usuario</button></div>
             <div class="users-layout"><div class="panel table-panel"><div class="table-wrap"><table id="users-table"><thead><tr><th>Usuario</th><th>Correo</th><th>Rol</th><th>Estado</th></tr></thead><tbody></tbody></table></div></div><aside class="panel role-panel"><h2>Permisos por rol</h2><div class="role-item"><strong>Administrador</strong><p>Acceso completo, usuarios y configuración.</p></div><div class="role-item"><strong>Atención</strong><p>Clientes, fallecidos, reservas y pagos.</p></div><div class="role-item"><strong>Operaciones</strong><p>Servicios programados y seguimiento.</p></div></aside></div>
           </section>
         </div>

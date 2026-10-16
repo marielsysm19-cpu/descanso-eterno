@@ -3,8 +3,8 @@ const SESSION_KEY = 'descanso-eterno-session';
 
 const seed = {
   clients: [
-    { id: 'CL-001', name: 'María Fernanda Rojas', document: '45781236', phone: '987 654 210', created: '2026-10-03' },
-    { id: 'CL-002', name: 'Antonio Salazar', document: '42156987', phone: '965 114 820', created: '2026-10-04' }
+    { id: 'CL-001', funnelStage: 'Entrante', name: 'María Fernanda Rojas', document: '45781236', phone: '+51987654210', email: 'maria.rojas@example.com', address: 'Av. España 1234, Trujillo, Perú', serviceId: 'SV-001', source: 'Recomendación', contactMethod: 'WhatsApp', created: '2026-10-03', photo: '' },
+    { id: 'CL-002', funnelStage: 'Interesado', name: 'Antonio Salazar', document: '42156987', phone: '+51965114820', email: 'antonio.salazar@example.com', address: 'Av. América Sur 2450, Trujillo, Perú', serviceId: 'SV-002', source: 'Google', contactMethod: 'Llamada', created: '2026-10-04', photo: '' }
   ],
   deceased: [
     { id: 'FA-001', name: 'Carlos Alberto Rojas', document: '18112456', deathDate: '2026-10-03', clientId: 'CL-001' },
@@ -40,13 +40,37 @@ const fields = document.querySelector('#form-fields');
 const toast = document.querySelector('#system-toast');
 
 function loadData() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || structuredClone(seed); }
-  catch { return structuredClone(seed); }
+  try {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (!stored) return structuredClone(seed);
+
+    stored.clients = (stored.clients || []).map(client => ({
+      funnelStage: 'Entrante',
+      email: '',
+      address: '',
+      serviceId: '',
+      source: '',
+      contactMethod: '',
+      photo: '',
+      ...client
+    }));
+
+    return stored;
+  } catch {
+    return structuredClone(seed);
+  }
 }
 
 function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  renderAll();
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    renderAll();
+    return true;
+  } catch (error) {
+    console.error('No se pudieron guardar los datos:', error);
+    showToast('No se pudo guardar. Si adjuntaste una foto, prueba con una imagen más pequeña.');
+    return false;
+  }
 }
 
 function byId(collection, id) { return data[collection].find(item => item.id === id); }
@@ -105,8 +129,18 @@ document.querySelector('.close-action').addEventListener('click', () => dialog.c
 dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
 
 const formConfig = {
-  client: { title: 'Registrar cliente responsable', eyebrow: 'HU01 · Datos obligatorios', collection: 'clients', prefix: 'CL', fields: [
-    ['name', 'Nombres y apellidos', 'text', true, 'full'], ['document', 'Documento de identidad', 'text', true], ['phone', 'Teléfono de contacto', 'tel', true]
+  client: { title: 'Registrar cliente responsable', eyebrow: 'HU01 · Registro de cliente', collection: 'clients', prefix: 'CL', fields: [
+    ['funnelStage', 'Etapa del embudo', ['Entrante', 'Interesado', 'Ofertado', 'Ganado', 'Perdido'], true],
+    ['name', 'Nombres y apellidos', 'text', true, 'full'],
+    ['document', 'Documento de identidad (opcional)', 'text', false],
+    ['phone', 'Teléfono internacional', 'tel', true],
+    ['email', 'Correo electrónico', 'email', true],
+    ['address', 'Dirección', 'text', true, 'full'],
+    ['serviceId', 'Servicio a contratar', 'services', true, 'full'],
+    ['source', '¿Cómo nos conoció?', ['Facebook', 'Instagram', 'TikTok', 'Google', 'Recomendación', 'Volante', 'Otro'], true],
+    ['contactMethod', 'Forma de contacto', ['Llamada', 'WhatsApp', 'Correo', 'Presencial'], true],
+    ['created', 'Fecha de registro', 'date', true],
+    ['photo', 'Foto del cliente', 'file', false, 'full']
   ]},
   deceased: { title: 'Registrar persona fallecida', eyebrow: 'HU02 · Asociación familiar', collection: 'deceased', prefix: 'FA', fields: [
     ['name', 'Nombres y apellidos', 'text', true, 'full'], ['document', 'Documento (opcional)', 'text', false], ['deathDate', 'Fecha de fallecimiento', 'date', true], ['clientId', 'Cliente responsable', 'clients', true, 'full']
@@ -129,49 +163,255 @@ function openForm(type, id = null) {
   currentType = type;
   editingId = id;
   const config = formConfig[type];
-  const current = id ? byId(config.collection, id) : {};
+  const current = id ? { ...byId(config.collection, id) } : {};
+
+  if (type === 'client' && !id) {
+    current.funnelStage = 'Entrante';
+    current.created = today();
+  }
+
   document.querySelector('#dialog-title').textContent = id ? `Actualizar ${config.title.replace('Registrar ', '').toLowerCase()}` : config.title;
   document.querySelector('#dialog-eyebrow').textContent = id ? 'Actualizar información registrada' : config.eyebrow;
   document.querySelector('#form-message').textContent = '';
   fields.innerHTML = config.fields.map(([name, label, typeDef, required, className = '']) => fieldHtml(name, label, typeDef, required, className, current[name])).join('');
+
+  if (type === 'client') {
+    const funnelInput = form.querySelector('[name="funnelStage"]');
+    const createdInput = form.querySelector('[name="created"]');
+
+    if (funnelInput && !id) {
+      funnelInput.value = 'Entrante';
+      funnelInput.disabled = true;
+    }
+
+    if (createdInput) {
+      createdInput.value = current.created || today();
+      createdInput.readOnly = true;
+    }
+
+    prepareClientForm(current.photo || '');
+  }
+
   dialog.showModal();
 }
 
 function fieldHtml(name, label, typeDef, required, className, value) {
   const req = required ? 'required' : '';
-  if (typeDef === 'textarea') return `<label class="${className}">${label}<textarea name="${name}" rows="3" ${req}>${escapeHtml(value || '')}</textarea></label>`;
-  if (typeDef === 'checkbox') return `<label class="check ${className}"><input name="${name}" type="checkbox" ${value !== false ? 'checked' : ''}/> ${label}</label>`;
-  if (Array.isArray(typeDef)) return `<label class="${className}">${label}<select name="${name}" ${req}><option value="">Selecciona</option>${typeDef.map(item => `<option ${item === value ? 'selected' : ''}>${item}</option>`).join('')}</select></label>`;
+
+  if (typeDef === 'textarea') {
+    return `<label class="${className}">${label}<textarea name="${name}" rows="3" ${req}>${escapeHtml(value || '')}</textarea></label>`;
+  }
+
+  if (typeDef === 'checkbox') {
+    return `<label class="check ${className}"><input name="${name}" type="checkbox" ${value !== false ? 'checked' : ''}/> ${label}</label>`;
+  }
+
+  if (typeDef === 'file') {
+    return `<label class="${className}">${label}<input name="${name}" type="file" accept="image/png,image/jpeg,image/webp" ${req}/><small class="field-help">JPG, PNG o WEBP. Máximo 1 MB.</small><div class="photo-preview" data-photo-preview>${value ? `<img src="${value}" alt="Foto registrada del cliente"/>` : '<span>Sin foto seleccionada</span>'}</div></label>`;
+  }
+
+  if (Array.isArray(typeDef)) {
+    return `<label class="${className}">${label}<select name="${name}" ${req}><option value="">Selecciona</option>${typeDef.map(item => `<option value="${escapeHtml(item)}" ${item === value ? 'selected' : ''}>${escapeHtml(item)}</option>`).join('')}</select></label>`;
+  }
+
   if (data[typeDef]) {
-    const options = data[typeDef].filter(item => item.active !== false && item.status !== 'Cancelada').map(item => `<option value="${item.id}" ${item.id === value ? 'selected' : ''}>${escapeHtml(item.name || item.id)}</option>`).join('');
+    const options = data[typeDef]
+      .filter(item => item.active !== false && item.status !== 'Cancelada')
+      .map(item => `<option value="${item.id}" ${item.id === value ? 'selected' : ''}>${escapeHtml(item.name || item.id)}</option>`)
+      .join('');
     return `<label class="${className}">${label}<select name="${name}" ${req}><option value="">Selecciona</option>${options}</select></label>`;
   }
-  return `<label class="${className}">${label}<input name="${name}" type="${typeDef}" value="${escapeHtml(value ?? '')}" ${req} ${typeDef === 'number' ? 'min="0" step="0.01"' : ''}/></label>`;
+
+  let extra = '';
+  if (typeDef === 'number') extra = 'min="0.01" step="0.01"';
+  if (typeDef === 'tel') extra = 'placeholder="+51987654321" pattern="^\\+[1-9][0-9]{7,14}$"';
+  if (typeDef === 'email') extra = 'placeholder="cliente@correo.com"';
+
+  return `<label class="${className}">${label}<input name="${name}" type="${typeDef}" value="${escapeHtml(value ?? '')}" ${req} ${extra}/></label>`;
 }
 
-form.addEventListener('submit', event => {
+function prepareClientForm(existingPhoto = '') {
+  const addressInput = form.querySelector('[name="address"]');
+  const photoInput = form.querySelector('[name="photo"]');
+  const photoPreview = form.querySelector('[data-photo-preview]');
+
+  if (addressInput) {
+    const mapContainer = document.createElement('div');
+    mapContainer.className = 'client-map full';
+    addressInput.closest('label').insertAdjacentElement('afterend', mapContainer);
+
+    let timeout;
+    const refreshMap = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => updateClientMap(addressInput.value), 450);
+    };
+
+    addressInput.addEventListener('input', refreshMap);
+    updateClientMap(addressInput.value);
+  }
+
+  if (photoInput && photoPreview) {
+    photoInput.addEventListener('change', () => {
+      const file = photoInput.files?.[0];
+      if (!file) {
+        photoPreview.innerHTML = existingPhoto ? `<img src="${existingPhoto}" alt="Foto registrada del cliente"/>` : '<span>Sin foto seleccionada</span>';
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        photoPreview.innerHTML = '<span>El archivo seleccionado no es una imagen.</span>';
+        return;
+      }
+
+      const previewUrl = URL.createObjectURL(file);
+      photoPreview.innerHTML = `<img src="${previewUrl}" alt="Vista previa de la foto del cliente"/>`;
+      photoPreview.querySelector('img').addEventListener('load', () => URL.revokeObjectURL(previewUrl), { once: true });
+    });
+  }
+}
+
+function updateClientMap(address) {
+  const container = form.querySelector('.client-map');
+  if (!container) return;
+
+  const cleanAddress = address.trim();
+  if (!cleanAddress) {
+    container.innerHTML = '<span class="map-placeholder">Ingresa una dirección para visualizarla automáticamente en el mapa.</span>';
+    return;
+  }
+
+  const mapAddress = encodeURIComponent(cleanAddress);
+  container.innerHTML = `<div class="map-label">Ubicación de la dirección</div><iframe title="Mapa de la dirección del cliente" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=${mapAddress}&output=embed"></iframe>`;
+}
+
+function validateClient(formData) {
+  const name = String(formData.get('name') || '').trim();
+  const phone = String(formData.get('phone') || '').trim();
+  const email = String(formData.get('email') || '').trim();
+  const address = String(formData.get('address') || '').trim();
+  const serviceId = String(formData.get('serviceId') || '').trim();
+  const source = String(formData.get('source') || '').trim();
+  const contactMethod = String(formData.get('contactMethod') || '').trim();
+
+  if (name.split(/\s+/).filter(Boolean).length < 2) return 'Ingresa al menos un nombre y un apellido.';
+  if (!/^\+[1-9][0-9]{7,14}$/.test(phone)) return 'El teléfono debe usar formato internacional, por ejemplo +51987654321.';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Ingresa un correo electrónico válido.';
+  if (!address) return 'La dirección es obligatoria.';
+  if (!serviceId) return 'Selecciona el servicio a contratar.';
+  if (!source) return 'Indica cómo conoció la funeraria.';
+  if (!contactMethod) return 'Selecciona la forma de contacto.';
+  return null;
+}
+
+function validateService(formData) {
+  const price = Number(formData.get('price'));
+  if (!Number.isFinite(price) || price <= 0) return 'El precio debe ser mayor que S/ 0.00.';
+  return null;
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('No se pudo leer la imagen.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+form.addEventListener('submit', async event => {
   event.preventDefault();
   const config = formConfig[currentType];
   const formData = new FormData(form);
-  const record = editingId ? { ...byId(config.collection, editingId) } : { id: createId(currentType, config), created: today() };
-  config.fields.forEach(([name, , typeDef]) => {
-    record[name] = typeDef === 'checkbox' ? form.querySelector(`[name="${name}"]`).checked : formData.get(name);
-    if (typeDef === 'number') record[name] = Number(record[name]);
-  });
-  if (currentType === 'reservation' && !editingId) { record.status = 'Por confirmar'; record.history = [{ status: record.status, at: new Date().toLocaleString('es-PE') }]; }
+
+  if (currentType === 'client' && !editingId) {
+    formData.set('funnelStage', 'Entrante');
+    formData.set('created', today());
+  }
+
+  const validationError = currentType === 'client'
+    ? validateClient(formData)
+    : currentType === 'service'
+      ? validateService(formData)
+      : null;
+
+  if (validationError) {
+    document.querySelector('#form-message').textContent = validationError;
+    return;
+  }
+
+  const record = editingId
+    ? { ...byId(config.collection, editingId) }
+    : { id: createId(currentType, config), created: today() };
+
+  for (const [name, , typeDef] of config.fields) {
+    if (typeDef === 'checkbox') {
+      record[name] = form.querySelector(`[name="${name}"]`).checked;
+      continue;
+    }
+    if (typeDef === 'file') continue;
+
+    let value = formData.get(name);
+    if (typeDef === 'number') value = Number(value);
+    if (typeof value === 'string') value = value.trim();
+    record[name] = value;
+  }
+
+  if (currentType === 'client') {
+    if (!editingId) {
+      record.funnelStage = 'Entrante';
+      record.created = today();
+    }
+
+    const photoInput = form.querySelector('[name="photo"]');
+    const file = photoInput?.files?.[0];
+
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        document.querySelector('#form-message').textContent = 'La foto seleccionada no es una imagen válida.';
+        return;
+      }
+      if (file.size > 1024 * 1024) {
+        document.querySelector('#form-message').textContent = 'La fotografía no debe superar 1 MB.';
+        return;
+      }
+
+      try {
+        record.photo = await fileToBase64(file);
+      } catch {
+        document.querySelector('#form-message').textContent = 'No se pudo procesar la fotografía.';
+        return;
+      }
+    }
+  }
+
+  if (currentType === 'reservation' && !editingId) {
+    record.status = 'Por confirmar';
+    record.history = [{ status: record.status, at: new Date().toLocaleString('es-PE') }];
+  }
   if (currentType === 'payment' && !editingId) record.date = today();
   if (currentType === 'user' && !editingId) record.active = true;
+
   if (editingId) data[config.collection] = data[config.collection].map(item => item.id === editingId ? record : item);
   else data[config.collection].push(record);
-  saveData();
+
+  if (!saveData()) return;
+
   document.querySelector('#form-message').textContent = editingId ? 'Información actualizada correctamente.' : 'Registro guardado correctamente.';
   showToast(editingId ? 'Cambios guardados.' : 'Registro creado con éxito.');
   setTimeout(() => dialog.close(), 650);
 });
 
 function createId(type, config) {
-  if (type === 'reservation') return `RS-${new Date().getFullYear()}-${String(data.reservations.length + 1).padStart(3, '0')}`;
-  return nextId(config.prefix, data[config.collection]);
+  if (type === 'reservation') {
+    const year = new Date().getFullYear();
+    const numbers = data.reservations
+      .map(item => Number(String(item.id).match(/^RS-\d{4}-(\d+)$/)?.[1] || 0));
+    return `RS-${year}-${String(Math.max(0, ...numbers) + 1).padStart(3, '0')}`;
+  }
+
+  const numbers = data[config.collection]
+    .map(item => Number(String(item.id).match(/-(\d+)$/)?.[1] || 0));
+  return `${config.prefix}-${String(Math.max(0, ...numbers) + 1).padStart(3, '0')}`;
 }
 
 function renderAll() {
@@ -201,7 +441,10 @@ function renderMetrics() {
 
 function renderClients() {
   const tbody = document.querySelector('#clients-table tbody');
-  tbody.innerHTML = data.clients.map(item => `<tr><td><strong>${escapeHtml(item.name)}</strong><small>${item.id}</small></td><td>${escapeHtml(item.document)}</td><td>${escapeHtml(item.phone)}</td><td>${displayDate(item.created)}</td><td><button class="action-button" data-edit="client" data-id="${item.id}">Editar</button></td></tr>`).join('') || emptyRow(5, 'No hay clientes registrados.');
+  tbody.innerHTML = data.clients.map(item => {
+    const service = byId('services', item.serviceId);
+    return `<tr><td><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.email || item.document || item.id)}</small></td><td><span class="status-pill">${escapeHtml(item.funnelStage || 'Entrante')}</span></td><td><strong>${escapeHtml(item.phone || '—')}</strong><small>${escapeHtml(item.contactMethod || 'Sin medio')}</small></td><td>${escapeHtml(service?.name || 'Sin servicio')}</td><td>${displayDate(item.created)}</td><td><button class="action-button" data-edit="client" data-id="${item.id}">Editar</button></td></tr>`;
+  }).join('') || emptyRow(6, 'No hay clientes registrados.');
   document.querySelector('#clients-count').textContent = `${data.clients.length} registros`;
 }
 
@@ -261,7 +504,7 @@ document.querySelector('#global-search').addEventListener('input', event => {
   const query = event.target.value.trim().toLowerCase();
   if (query.length < 2) return;
   const match = [
-    ...data.clients.map(item => ({ view: 'clients', text: `${item.name} ${item.document}` })),
+    ...data.clients.map(item => ({ view: 'clients', text: `${item.name} ${item.document || ''} ${item.email || ''} ${item.phone || ''} ${item.funnelStage || ''}` })),
     ...data.reservations.map(item => ({ view: 'reservations', text: `${item.id} ${byId('clients', item.clientId)?.name}` })),
     ...data.services.map(item => ({ view: 'services', text: item.name }))
   ].find(item => item.text.toLowerCase().includes(query));
