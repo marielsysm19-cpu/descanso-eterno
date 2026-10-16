@@ -19,6 +19,9 @@ const seed = {
     { id: 'RS-2026-001', clientId: 'CL-001', deceasedId: 'FA-001', serviceId: 'SV-001', date: '2026-10-06', time: '10:00', status: 'En preparación', history: [{ status: 'Por confirmar', at: '2026-10-03 09:10' }, { status: 'En preparación', at: '2026-10-04 15:30' }] },
     { id: 'RS-2026-002', clientId: 'CL-002', deceasedId: 'FA-002', serviceId: 'SV-002', date: '2026-10-06', time: '16:00', status: 'Por confirmar', history: [{ status: 'Por confirmar', at: '2026-10-04 17:45' }] }
   ],
+  pickups: [
+    { id: 'RC-001', deceasedId: 'FA-001', clientId: 'CL-001', pickupAddress: 'Hospital Regional Docente de Trujillo', destinationAddress: 'Funeraria Descanso Eterno', date: '2026-10-06', time: '12:30', status: 'Programado', notes: 'Coordinar el recojo con el familiar responsable.' }
+  ],
   payments: [
     { id: 'PG-001', reservationId: 'RS-2026-001', date: '2026-10-04', method: 'Transferencia', amount: 1400, status: 'Parcial' }
   ],
@@ -54,6 +57,8 @@ function loadData() {
       photo: '',
       ...client
     }));
+
+    stored.pickups = stored.pickups || [];
 
     return stored;
   } catch {
@@ -151,6 +156,16 @@ const formConfig = {
   reservation: { title: 'Registrar reserva', eyebrow: 'HU07 · Contratación', collection: 'reservations', prefix: 'RS', fields: [
     ['clientId', 'Cliente responsable', 'clients', true], ['deceasedId', 'Persona fallecida', 'deceased', true], ['serviceId', 'Servicio', 'services', true, 'full'], ['date', 'Fecha', 'date', true], ['time', 'Hora', 'time', true]
   ]},
+  pickup: { title: 'Registrar solicitud de recojo', eyebrow: 'Recojo y traslado del fallecido', collection: 'pickups', prefix: 'RC', fields: [
+    ['deceasedId', 'Persona fallecida', 'deceased', true, 'full'],
+    ['clientId', 'Cliente responsable', 'clients', true, 'full'],
+    ['pickupAddress', 'Dirección de recojo', 'text', true, 'full'],
+    ['destinationAddress', 'Dirección de destino', 'text', true, 'full'],
+    ['date', 'Fecha de recojo', 'date', true],
+    ['time', 'Hora de recojo', 'time', true],
+    ['status', 'Estado', ['Solicitado', 'Programado', 'En traslado', 'Completado', 'Cancelado'], true],
+    ['notes', 'Observaciones', 'textarea', false, 'full']
+  ]},
   payment: { title: 'Registrar pago', eyebrow: 'HU10 · Control económico', collection: 'payments', prefix: 'PG', fields: [
     ['reservationId', 'Reserva asociada', 'reservations', true, 'full'], ['amount', 'Monto', 'number', true], ['method', 'Método de pago', ['Efectivo', 'Transferencia', 'Tarjeta'], true], ['status', 'Estado del pago', ['Parcial', 'Pagado'], true]
   ]},
@@ -168,6 +183,11 @@ function openForm(type, id = null) {
   if (type === 'client' && !id) {
     current.funnelStage = 'Entrante';
     current.created = today();
+  }
+
+  if (type === 'pickup' && !id) {
+    current.status = 'Solicitado';
+    current.date = today();
   }
 
   document.querySelector('#dialog-title').textContent = id ? `Actualizar ${config.title.replace('Registrar ', '').toLowerCase()}` : config.title;
@@ -190,6 +210,21 @@ function openForm(type, id = null) {
     }
 
     prepareClientForm(current.photo || '');
+  }
+
+  if (type === 'pickup') {
+    const deceasedSelect = form.querySelector('[name="deceasedId"]');
+    const clientSelect = form.querySelector('[name="clientId"]');
+
+    if (deceasedSelect && clientSelect) {
+      const syncResponsible = () => {
+        const deceased = byId('deceased', deceasedSelect.value);
+        if (deceased) clientSelect.value = deceased.clientId;
+      };
+
+      deceasedSelect.addEventListener('change', syncResponsible);
+      if (!id && deceasedSelect.value) syncResponsible();
+    }
   }
 
   dialog.showModal();
@@ -309,6 +344,24 @@ function validateService(formData) {
   return null;
 }
 
+function validatePickup(formData) {
+  const deceasedId = String(formData.get('deceasedId') || '').trim();
+  const clientId = String(formData.get('clientId') || '').trim();
+  const pickupAddress = String(formData.get('pickupAddress') || '').trim();
+  const destinationAddress = String(formData.get('destinationAddress') || '').trim();
+  const date = String(formData.get('date') || '').trim();
+  const time = String(formData.get('time') || '').trim();
+
+  if (!deceasedId) return 'Selecciona la persona fallecida.';
+  if (!clientId) return 'Selecciona el cliente responsable.';
+  const deceased = byId('deceased', deceasedId);
+  if (deceased && deceased.clientId !== clientId) return 'El cliente responsable no corresponde a la persona fallecida seleccionada.';
+  if (!pickupAddress) return 'Ingresa la dirección de recojo.';
+  if (!destinationAddress) return 'Ingresa la dirección de destino.';
+  if (!date || !time) return 'Indica la fecha y hora del recojo.';
+  return null;
+}
+
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -332,7 +385,9 @@ form.addEventListener('submit', async event => {
     ? validateClient(formData)
     : currentType === 'service'
       ? validateService(formData)
-      : null;
+      : currentType === 'pickup'
+        ? validatePickup(formData)
+        : null;
 
   if (validationError) {
     document.querySelector('#form-message').textContent = validationError;
@@ -415,7 +470,7 @@ function createId(type, config) {
 }
 
 function renderAll() {
-  renderMetrics(); renderClients(); renderDeceased(); renderServices(); renderReservations(); renderTracking(); renderPayments(); renderUsers();
+  renderMetrics(); renderClients(); renderDeceased(); renderServices(); renderReservations(); renderPickups(); renderTracking(); renderPayments(); renderUsers();
 }
 
 function renderMetrics() {
@@ -462,6 +517,20 @@ function renderReservations() {
   document.querySelector('#reservations-count').textContent = `${data.reservations.length} reservas`;
 }
 
+function renderPickups() {
+  const tbody = document.querySelector('#pickups-table tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = data.pickups.map(item => {
+    const deceased = byId('deceased', item.deceasedId);
+    const client = byId('clients', item.clientId);
+
+    return `<tr><td><strong>${escapeHtml(item.id)}</strong></td><td><strong>${escapeHtml(deceased?.name || 'Sin fallecido')}</strong></td><td>${escapeHtml(client?.name || 'Sin responsable')}</td><td>${escapeHtml(item.pickupAddress || '—')}</td><td>${escapeHtml(item.destinationAddress || '—')}</td><td>${displayDate(item.date)} · ${escapeHtml(item.time || '—')}</td><td><span class="status-pill ${slug(item.status || 'Solicitado')}">${escapeHtml(item.status || 'Solicitado')}</span></td><td><button class="action-button" data-edit="pickup" data-id="${item.id}">Editar</button></td></tr>`;
+  }).join('') || emptyRow(8, 'No hay solicitudes de recojo registradas.');
+
+  document.querySelector('#pickups-count').textContent = `${data.pickups.length} solicitudes`;
+}
+
 function renderTracking() {
   document.querySelector('#tracking-grid').innerHTML = data.reservations.filter(item => item.status !== 'Cancelada').map(item => `<article class="tracking-card"><header><div><p class="eyebrow">${item.id}</p><h2>${escapeHtml(byId('clients', item.clientId)?.name || '')}</h2><p>${escapeHtml(byId('services', item.serviceId)?.name || '')} · ${displayDate(item.date)}</p></div><span class="status-pill ${slug(item.status)}">${item.status}</span></header><select data-status-for="${item.id}" aria-label="Actualizar estado de ${item.id}">${['Por confirmar','En preparación','En ceremonia','Finalizado'].map(status => `<option ${status === item.status ? 'selected' : ''}>${status}</option>`).join('')}</select><ul class="history">${[...(item.history || [])].reverse().slice(0, 4).map(entry => `<li><strong>${entry.status}</strong><br>${escapeHtml(entry.at)}</li>`).join('')}</ul></article>`).join('') || '<div class="panel empty-row">No hay servicios para seguimiento.</div>';
 }
@@ -506,6 +575,7 @@ document.querySelector('#global-search').addEventListener('input', event => {
   const match = [
     ...data.clients.map(item => ({ view: 'clients', text: `${item.name} ${item.document || ''} ${item.email || ''} ${item.phone || ''} ${item.funnelStage || ''}` })),
     ...data.reservations.map(item => ({ view: 'reservations', text: `${item.id} ${byId('clients', item.clientId)?.name}` })),
+    ...data.pickups.map(item => ({ view: 'pickups', text: `${item.id} ${byId('deceased', item.deceasedId)?.name || ''} ${byId('clients', item.clientId)?.name || ''} ${item.pickupAddress || ''} ${item.destinationAddress || ''} ${item.status || ''}` })),
     ...data.services.map(item => ({ view: 'services', text: item.name }))
   ].find(item => item.text.toLowerCase().includes(query));
   if (match) showView(match.view);

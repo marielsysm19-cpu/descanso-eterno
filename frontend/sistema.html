@@ -54,6 +54,7 @@
           <p>Operación</p>
           <button data-view="services"><span>▤</span>Servicios</button>
           <button data-view="reservations"><span>▣</span>Reservas</button>
+          <button data-view="pickups"><span>▰</span>Recojo y traslado</button>
           <button data-view="tracking"><span>◉</span>Seguimiento</button>
           <button data-view="payments"><span>▱</span>Pagos</button>
           <p>Administración</p>
@@ -76,7 +77,7 @@
             <div class="dashboard-grid">
               <article class="panel schedule-panel"><div class="panel-head"><div><h2>Servicios programados</h2><p>Próximas atenciones registradas</p></div><button class="text-button" data-jump="reservations">Ver todos</button></div><div id="upcoming-list" class="upcoming-list"></div></article>
               <article class="panel progress-panel"><div class="panel-head"><div><h2>Estado de servicios</h2><p>Distribución actual</p></div></div><div id="status-summary" class="status-summary"></div></article>
-              <article class="panel quick-panel"><div class="panel-head"><div><h2>Accesos rápidos</h2><p>Registra información esencial</p></div></div><div class="quick-grid"><button data-quick="client"><span>♙</span>Registrar cliente</button><button data-quick="deceased"><span>◇</span>Registrar fallecido</button><button data-quick="service"><span>▤</span>Registrar servicio</button><button data-quick="payment"><span>▱</span>Registrar pago</button></div></article>
+              <article class="panel quick-panel"><div class="panel-head"><div><h2>Accesos rápidos</h2><p>Registra información esencial</p></div></div><div class="quick-grid"><button data-quick="client"><span>♙</span>Registrar cliente</button><button data-quick="deceased"><span>◇</span>Registrar fallecido</button><button data-quick="service"><span>▤</span>Registrar servicio</button><button data-quick="pickup"><span>▰</span>Solicitar recojo</button><button data-quick="payment"><span>▱</span>Registrar pago</button></div></article>
             </div>
           </section>
 
@@ -98,6 +99,11 @@
           <section class="view" id="view-reservations" data-title="Reservas y contrataciones">
             <div class="page-heading"><div><p class="eyebrow">HU07 · HU08 · HU09 · HU11</p><h1>Reservas</h1><p>Programa, consulta y actualiza los servicios contratados.</p></div><button class="primary-button" data-quick="reservation">+ Nueva reserva</button></div>
             <div class="panel table-panel"><div class="table-tools"><input class="table-search" data-table-filter="reservations-table" placeholder="Buscar reserva, cliente o servicio" /><span id="reservations-count"></span></div><div class="table-wrap"><table id="reservations-table"><thead><tr><th>Reserva</th><th>Familia</th><th>Servicio</th><th>Fecha y hora</th><th>Estado</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
+          </section>
+
+          <section class="view" id="view-pickups" data-title="Recojo y traslado">
+            <div class="page-heading"><div><p class="eyebrow">Solicitud de recojo</p><h1>Recojo del fallecido</h1><p>Registra y consulta las solicitudes de recojo y traslado de personas fallecidas.</p></div><button class="primary-button" data-quick="pickup">+ Solicitar recojo</button></div>
+            <div class="panel table-panel"><div class="table-tools"><input class="table-search" data-table-filter="pickups-table" placeholder="Buscar fallecido, cliente o dirección" /><span id="pickups-count"></span></div><div class="table-wrap"><table id="pickups-table"><thead><tr><th>Solicitud</th><th>Persona fallecida</th><th>Responsable</th><th>Recojo</th><th>Destino</th><th>Fecha y hora</th><th>Estado</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
           </section>
 
           <section class="view" id="view-tracking" data-title="Seguimiento de servicios">
