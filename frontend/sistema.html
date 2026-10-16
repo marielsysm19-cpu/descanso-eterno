@@ -14,36 +14,7 @@
     <style>[hidden]{display:none!important}</style>
   </head>
   <body>
-    <section class="login-screen" id="login-screen" aria-labelledby="login-title">
-      <div class="login-brand">
-        <a href="index.html" aria-label="Volver al sitio de Descanso Eterno">
-          <span class="brand-mark" aria-hidden="true">⌁</span>
-          <span>Descanso Eterno</span>
-        </a>
-        <div class="login-message">
-          <p class="eyebrow">Sistema de gestión funeraria</p>
-          <h1>Organización y cuidado en cada servicio.</h1>
-          <p>Un espacio central para acompañar a las familias, coordinar servicios y mantener informada a toda la operación.</p>
-        </div>
-        <p class="login-footnote">Prototipo académico · Agile Development 2026</p>
-      </div>
-
-      <div class="login-panel">
-        <form class="login-card" id="login-form">
-          <a class="back-link" href="index.html">← Volver al sitio público</a>
-          <p class="eyebrow">Acceso del personal</p>
-          <h2 id="login-title">Bienvenido al sistema</h2>
-          <p>Ingresa con tus credenciales para continuar.</p>
-          <label>Correo electrónico<input id="login-email" type="email" autocomplete="username" value="admin@descansoeterno.pe" required /></label>
-          <label>Contraseña<input id="login-password" type="password" autocomplete="current-password" value="Demo2026!" required /></label>
-          <button class="primary-button" type="submit">Ingresar</button>
-          <p class="login-error" id="login-error" role="alert"></p>
-          <div class="demo-note"><strong>Acceso de demostración</strong><span>admin@descansoeterno.pe</span><span>Demo2026!</span></div>
-        </form>
-      </div>
-    </section>
-
-    <div class="app-shell" id="app-shell" hidden>
+    <div class="app-shell" id="app-shell">
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand"><span class="brand-mark" aria-hidden="true">⌁</span><span>Descanso Eterno<small>Gestión funeraria</small></span></div>
         <nav class="side-nav" aria-label="Módulos del sistema">
@@ -55,12 +26,8 @@
           <button data-view="services"><span>▤</span>Servicios</button>
           <button data-view="reservations"><span>▣</span>Reservas</button>
           <button data-view="pickups"><span>▰</span>Recojo y traslado</button>
-          <button data-view="tracking"><span>◉</span>Seguimiento</button>
-          <button data-view="payments"><span>▱</span>Pagos</button>
-          <p>Administración</p>
-          <button data-view="users"><span>⚙</span>Usuarios y permisos</button>
         </nav>
-        <div class="sidebar-footer"><span class="avatar">ML</span><span><strong>Marielsys López</strong><small>Administradora</small></span><button id="logout" aria-label="Cerrar sesión">↪</button></div>
+        <div class="sidebar-footer"><span class="avatar">DE</span><span><strong>Prototipo académico</strong><small>Avance del Sprint 1</small></span></div>
       </aside>
 
       <main class="workspace">
@@ -77,7 +44,7 @@
             <div class="dashboard-grid">
               <article class="panel schedule-panel"><div class="panel-head"><div><h2>Servicios programados</h2><p>Próximas atenciones registradas</p></div><button class="text-button" data-jump="reservations">Ver todos</button></div><div id="upcoming-list" class="upcoming-list"></div></article>
               <article class="panel progress-panel"><div class="panel-head"><div><h2>Estado de servicios</h2><p>Distribución actual</p></div></div><div id="status-summary" class="status-summary"></div></article>
-              <article class="panel quick-panel"><div class="panel-head"><div><h2>Accesos rápidos</h2><p>Registra información esencial</p></div></div><div class="quick-grid"><button data-quick="client"><span>♙</span>Registrar cliente</button><button data-quick="deceased"><span>◇</span>Registrar fallecido</button><button data-quick="service"><span>▤</span>Registrar servicio</button><button data-quick="pickup"><span>▰</span>Solicitar recojo</button><button data-quick="payment"><span>▱</span>Registrar pago</button></div></article>
+              <article class="panel quick-panel"><div class="panel-head"><div><h2>Accesos rápidos</h2><p>Registra información esencial</p></div></div><div class="quick-grid"><button data-quick="client"><span>♙</span>Registrar cliente</button><button data-quick="deceased"><span>◇</span>Registrar fallecido</button><button data-quick="service"><span>▤</span>Registrar servicio</button><button data-quick="reservation"><span>▣</span>Registrar reserva</button><button data-quick="pickup"><span>▰</span>Solicitar recojo</button></div></article>
             </div>
           </section>
 

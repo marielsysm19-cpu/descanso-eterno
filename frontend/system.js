@@ -1,5 +1,4 @@
 const STORAGE_KEY = 'descanso-eterno-demo-v1';
-const SESSION_KEY = 'descanso-eterno-session';
 
 const seed = {
   clients: [
@@ -35,7 +34,6 @@ const seed = {
 let data = loadData();
 let currentType = '';
 let editingId = null;
-const loginScreen = document.querySelector('#login-screen');
 const appShell = document.querySelector('#app-shell');
 const dialog = document.querySelector('#record-dialog');
 const form = document.querySelector('#record-form');
@@ -85,32 +83,6 @@ function displayDate(value) { if (!value) return '—'; return new Intl.DateTime
 function slug(value) { return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-'); }
 function nextId(prefix, list) { return `${prefix}-${String(list.length + 1).padStart(3, '0')}`; }
 function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]); }
-
-document.querySelector('#login-form').addEventListener('submit', event => {
-  event.preventDefault();
-  const email = document.querySelector('#login-email').value.trim();
-  const password = document.querySelector('#login-password').value;
-  if (email === 'admin@descansoeterno.pe' && password === 'Demo2026!') {
-    sessionStorage.setItem(SESSION_KEY, 'active');
-    enterApp();
-  } else {
-    document.querySelector('#login-error').textContent = 'Las credenciales no son válidas. Usa el acceso de demostración.';
-  }
-});
-
-function enterApp() {
-  loginScreen.hidden = true;
-  appShell.hidden = false;
-  renderAll();
-}
-
-document.querySelector('#logout').addEventListener('click', () => {
-  sessionStorage.removeItem(SESSION_KEY);
-  appShell.hidden = true;
-  loginScreen.hidden = false;
-});
-
-if (sessionStorage.getItem(SESSION_KEY) === 'active') enterApp();
 
 document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
 document.querySelectorAll('[data-jump]').forEach(button => button.addEventListener('click', () => showView(button.dataset.jump)));
@@ -475,13 +447,8 @@ function renderAll() {
 
 function renderMetrics() {
   const activeReservations = data.reservations.filter(item => !['Finalizado', 'Cancelada'].includes(item.status));
-  const pendingTotal = data.reservations.reduce((sum, reservation) => {
-    const price = byId('services', reservation.serviceId)?.price || 0;
-    const paid = data.payments.filter(payment => payment.reservationId === reservation.id).reduce((value, payment) => value + Number(payment.amount), 0);
-    return sum + Math.max(0, price - paid);
-  }, 0);
   document.querySelector('#metrics').innerHTML = [
-    ['Servicios activos', activeReservations.length, 'reservas en proceso'], ['Clientes', data.clients.length, 'responsables registrados'], ['Catálogo disponible', data.services.filter(item => item.active).length, 'servicios activos'], ['Saldo pendiente', money(pendingTotal), 'por recaudar']
+    ['Servicios activos', activeReservations.length, 'reservas en proceso'], ['Clientes', data.clients.length, 'responsables registrados'], ['Catálogo disponible', data.services.filter(item => item.active).length, 'servicios activos'], ['Solicitudes de recojo', data.pickups.length, 'registradas hasta hoy']
   ].map(([label, value, detail]) => `<article class="metric-card"><span>${label}</span><strong>${value}</strong><small>${detail}</small></article>`).join('');
   document.querySelector('#upcoming-list').innerHTML = data.reservations.filter(item => item.status !== 'Cancelada').sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)).slice(0, 5).map(reservation => {
     const client = byId('clients', reservation.clientId); const service = byId('services', reservation.serviceId); const date = new Date(`${reservation.date}T12:00:00`);
